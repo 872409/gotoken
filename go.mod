@@ -1,4 +1,4 @@
-module gotoken
+module github.com/872409/gotoken
 
 go 1.12
 
