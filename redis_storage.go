@@ -17,7 +17,28 @@ func userTokenHashKey(uid int64) string {
 	return "ut:" + strconv.FormatInt(uid, 10)
 }
 
-func NewRedis(secret string, dbConn redis.Conn) *GoToken {
+func NewRedisGoToken(config GoTokenConfig) (*GoToken, error) {
+	c, err := redis.Dial("tcp", config.RedisHost, redis.DialPassword(config.RedisPwd), redis.DialDatabase(config.RedisDB))
+	if err != nil {
+		log.Errorln("initGoToken: error ", err)
+		return nil, err
+	}
+
+	expireHour := 24 * 365
+	if config.ExpireHour > 0 {
+		expireHour = config.ExpireHour
+	}
+
+	goToken := &GoToken{
+		Secret:     config.Secret,
+		ExpireHour: expireHour,
+		storage:    newRedisStorage(c),
+	}
+
+	return goToken, nil
+}
+
+func newRedis(secret string, dbConn redis.Conn) *GoToken {
 	goToken := &GoToken{
 		Secret:     secret,
 		ExpireHour: 24 * 365,

@@ -8,3 +8,5 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/gorilla/schema v1.1.0
 )
+
+replace github.com/872409/gatom => /Users/x/SynologyDrive-Sync-Up/dev/projects/personal/gatom
