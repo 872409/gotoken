@@ -2,6 +2,7 @@ package gotoken
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/872409/gatom/gc"
 	"github.com/872409/gatom/log"
@@ -81,31 +82,37 @@ func GetClientPayload(c *gin.Context) (payload *Payload, err error) {
 // 	return decodePayload(encoded)
 // }
 
-func (gt *GoToken) Middleware() gin.HandlerFunc {
+var ginMiddleWareOnce = sync.Once{}
 
-	return func(c *gin.Context) {
-		g := gc.New(c)
-		clientPayload, err := GetClientPayload(c)
+func (gt *GoToken) GinMiddleware() gin.HandlerFunc {
 
-		if err == nil {
-			var serverPayload *Payload
-			serverPayload, err = gt.Parse(clientPayload)
-			// log.Println("serverPayload", serverPayload, err)
+	ginMiddleWareOnce.Do(func() {
+		gt.ginMiddleware = func(c *gin.Context) {
+			g := gc.New(c)
+			clientPayload, err := GetClientPayload(c)
 
-			if err == nil && serverPayload.UID > 0 {
-				g.SetAuthID(serverPayload.UID)
-				g.Set(ginPayloadKey, serverPayload)
+			if err == nil {
+				var serverPayload *Payload
+				serverPayload, err = gt.Parse(clientPayload)
+				// log.Println("serverPayload", serverPayload, err)
+
+				if err == nil && serverPayload.UID > 0 {
+					g.SetAuthID(serverPayload.UID)
+					g.Set(ginPayloadKey, serverPayload)
+				}
 			}
+
+			if err != nil || g.AuthID() == 0 {
+				log.Println("GoToken Middleware", clientPayload, err)
+				g.JSONCodeError(err)
+				return
+			}
+
+			// log.Println("clientPayload", clientPayload)
+
+			g.Next()
 		}
+	})
 
-		if err != nil || g.AuthID() == 0 {
-			log.Println("GoToken Middleware", clientPayload, err)
-			g.JSONCodeError(err)
-			return
-		}
-
-		// log.Println("clientPayload", clientPayload)
-
-		g.Next()
-	}
+	return gt.ginMiddleware
 }

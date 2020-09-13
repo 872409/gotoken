@@ -2,7 +2,7 @@ package gotoken
 
 import (
 	"time"
-
+	"github.com/gin-gonic/gin"
 	"github.com/872409/gatom/log"
 )
 
@@ -22,10 +22,12 @@ type StorageHandler interface {
 }
 
 type GoToken struct {
+	TokenKeyName string
 	TokenVersion string
 	Secret       string
 	ExpireHour   int
 	storage      StorageHandler
+	ginMiddleware gin.HandlerFunc
 }
 
 func (gt *GoToken) Exit() {

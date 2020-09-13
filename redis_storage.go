@@ -20,7 +20,7 @@ func userTokenHashKey(uid int64) string {
 func NewRedisGoToken(config GoTokenConfig) (*GoToken, error) {
 	c, err := redis.Dial("tcp", config.RedisHost, redis.DialPassword(config.RedisPwd), redis.DialDatabase(config.RedisDB))
 	if err != nil {
-		log.Errorln("initGoToken: error ", err)
+		log.Errorln("initGoToken: error ", err, config)
 		return nil, err
 	}
 
@@ -30,9 +30,10 @@ func NewRedisGoToken(config GoTokenConfig) (*GoToken, error) {
 	}
 
 	goToken := &GoToken{
-		Secret:     config.Secret,
-		ExpireHour: expireHour,
-		storage:    newRedisStorage(c),
+		TokenKeyName: "go-token",
+		Secret:       config.Secret,
+		ExpireHour:   expireHour,
+		storage:      newRedisStorage(c),
 	}
 
 	return goToken, nil
