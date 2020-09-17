@@ -30,7 +30,7 @@ func GetAuthPayload(c *gin.Context) (payload *Payload, exists bool) {
 	return
 }
 
-func decodePayload(encoded string) (payload *Payload, err error) {
+func decodeClientPayload(encoded string) (payload *ClientPayload, err error) {
 
 	if encoded == "" {
 		err = ErrorGoTokenHeaderParams
@@ -47,14 +47,14 @@ func decodePayload(encoded string) (payload *Payload, err error) {
 	return
 }
 
-func GetClientPayload(c *gin.Context) (payload *Payload, err error) {
+func GetClientPayload(c *gin.Context) (payload *ClientPayload, err error) {
 	encoded := c.GetHeader(HeaderToken)
 	if len(encoded) > 0 {
-		return decodePayload(encoded)
+		return decodeClientPayload(encoded)
 	}
 
 	if encoded, ok := c.GetQuery(queryTokenName); ok {
-		return decodePayload(encoded)
+		return decodeClientPayload(encoded)
 	}
 
 	return nil, errors.New("client payload not exists")

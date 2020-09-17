@@ -62,7 +62,7 @@ func (gt *redisHandler) Close() {
 	_ = gt.redisConn.Close()
 }
 
-func (gt *redisHandler) GetAuthToken(clientPayload *Payload) (payload *Payload, ok bool) {
+func (gt *redisHandler) GetAuthToken(clientPayload *ClientPayload) (payload *Payload, ok bool) {
 	if gt.redisConn == nil {
 		return
 	}

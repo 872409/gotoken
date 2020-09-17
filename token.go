@@ -14,10 +14,15 @@ type Payload struct {
 	// TokenVersion    string `json:"av,omitempty" schema:"av"`
 	ExpiresAt int64 `json:"ea,omitempty" schema:"ea"`
 }
+type ClientPayload struct {
+	Token         string `json:"-" schema:"token"`
+	ClientType    string `json:"ct,omitempty" schema:"ct"`
+	ClientVersion string `json:"cv,omitempty" schema:"cv"`
+}
 
 type StorageHandler interface {
 	SaveAuthToken(payload *Payload, authToken string) (err error)
-	GetAuthToken(clientPayload *Payload) (payload *Payload, ok bool)
+	GetAuthToken(clientPayload *ClientPayload) (payload *Payload, ok bool)
 	Close()
 }
 
@@ -54,7 +59,7 @@ func (gt *GoToken) ParseBase64(encoded string) (*Payload, error) {
 	return gt.Parse(payload)
 }
 
-func (gt *GoToken) Parse(clientPayload *Payload) (payload *Payload, err error) {
+func (gt *GoToken) Parse(clientPayload *ClientPayload) (payload *Payload, err error) {
 	storedPayload, ok := gt.storage.GetAuthToken(clientPayload)
 	// log.Infoln("Parse", storedPayload.ClientType, ok, clientPayload.ClientType, storedPayload.ExpiresAt < time.Now().Unix())
 	if !ok || storedPayload == nil {

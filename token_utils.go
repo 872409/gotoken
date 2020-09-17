@@ -25,7 +25,7 @@ import (
 // 	return dst.Encode()
 // }
 
-func ParseFormBase64(encoded string) (payload *Payload, err error) {
+func ParseFormBase64(encoded string) (payload *ClientPayload, err error) {
 	decoded, err := crypto.Base64Decode(encoded)
 	if err != nil {
 		return
@@ -35,13 +35,13 @@ func ParseFormBase64(encoded string) (payload *Payload, err error) {
 	return
 }
 
-func ParseFormQuery(query string) (payload *Payload, err error) {
+func ParseFormQuery(query string) (payload *ClientPayload, err error) {
 	queryMap, err := url.ParseQuery(query)
 	if err != nil {
 		return
 	}
 
-	payload = &Payload{}
+	payload = &ClientPayload{}
 	decoder := schema.NewDecoder()
 	if err = decoder.Decode(payload, queryMap); err != nil {
 		return
