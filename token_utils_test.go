@@ -40,13 +40,13 @@ func TestR(t *testing.T) {
 func TestGenerate(t *testing.T) {
 	goToken := getRedisConn()
 
-	payload := &Payload{UID: 100, ClientVersion: "v1.0.1", ClientType: "ios", ExpiresAt: time.Now().Add(time.Hour * 24).Unix()}
+	payload := &TokenPayload{UID: 100, ClientVersion: "v1.0.1", ClientType: "ios", ExpiresAt: time.Now().Add(time.Hour * 24).Unix()}
 
 	token, ok := goToken.GenerateAuth(payload, "aaa")
 	// base64 := payload.ToBase64()
 	// fmt.Println(token, ok)
 
-	clientPayload := &Payload{ClientType: "ios", Token: token}
+	clientPayload := &TokenPayload{ClientType: "ios", Token: token}
 	getPayload, ok := goToken.Parse(clientPayload)
 	fmt.Println(getPayload, ok)
 }

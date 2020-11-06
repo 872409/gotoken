@@ -62,7 +62,7 @@ func (gt *redisHandler) Close() {
 	_ = gt.redisConn.Close()
 }
 
-func (gt *redisHandler) GetAuthToken(clientPayload *ClientPayload) (payload *Payload, ok bool) {
+func (gt *redisHandler) GetAuthToken(clientPayload *ClientPayload) (payload *TokenPayload, ok bool) {
 	if gt.redisConn == nil {
 		return
 	}
@@ -76,7 +76,7 @@ func (gt *redisHandler) GetAuthToken(clientPayload *ClientPayload) (payload *Pay
 		return
 	}
 
-	payload = &Payload{}
+	payload = &TokenPayload{}
 	err = json.Unmarshal([]byte(reply), payload)
 
 	if err != nil {
@@ -90,7 +90,7 @@ func (gt *redisHandler) GetAuthToken(clientPayload *ClientPayload) (payload *Pay
 	return
 }
 
-func (gt *redisHandler) SaveAuthToken(payload *Payload, token string) (err error) {
+func (gt *redisHandler) SaveAuthToken(payload *TokenPayload, token string) (err error) {
 
 	if gt.redisConn == nil {
 		return errors.New("redisConn not connect")
@@ -102,7 +102,7 @@ func (gt *redisHandler) SaveAuthToken(payload *Payload, token string) (err error
 		return
 	}
 
-	lastToken, _ := gt.getClientToken(payload.UID, payload.ClientType)
+	lastToken, _ := gt.getClientToken(payload.UID, string(payload.ClientType))
 
 	if err = gt.redisConn.Send("SET", goTokenKey(token), string(bytes)); err != nil {
 		return

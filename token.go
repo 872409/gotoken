@@ -2,44 +2,61 @@ package gotoken
 
 import (
 	"time"
-	"github.com/gin-gonic/gin"
+
+	"github.com/872409/gatom/gc"
 	"github.com/872409/gatom/log"
+	"github.com/gin-gonic/gin"
 )
 
-type Payload struct {
-	Token         string `json:"-" schema:"token"`
-	UID           int64  `json:"u,omitempty" schema:"u"`
-	ClientType    string `json:"ct,omitempty" schema:"ct"`
-	ClientVersion string `json:"cv,omitempty" schema:"cv"`
+type ClientType string
+
+const (
+	ClientType_iOS     = "ios"
+	ClientType_Android = "android"
+)
+
+type PayloadProvider interface {
+	GetClientPayload(g *gc.GContext) (*ClientPayload, error)
+	Parse(client *ClientPayload) (*TokenPayload, error)
+}
+
+type TokenPayload struct {
+	Token         string     `json:"-" schema:"token"`
+	UID           int64      `json:"u,omitempty" schema:"u"`
+	ClientType    ClientType `json:"ct,omitempty" schema:"ct"`
+	ClientVersion string     `json:"cv,omitempty" schema:"cv"`
 	// TokenVersion    string `json:"av,omitempty" schema:"av"`
 	ExpiresAt int64 `json:"ea,omitempty" schema:"ea"`
 }
 type ClientPayload struct {
-	Token         string `json:"-" schema:"token"`
-	ClientType    string `json:"ct,omitempty" schema:"ct"`
-	ClientVersion string `json:"cv,omitempty" schema:"cv"`
+	Token         string     `json:"-" schema:"token"`
+	ClientType    ClientType `json:"ct,omitempty" schema:"ct"`
+	ClientVersion string     `json:"cv,omitempty" schema:"cv"`
+	IP            string
+	UserAgent     string
 }
 
 type StorageHandler interface {
-	SaveAuthToken(payload *Payload, authToken string) (err error)
-	GetAuthToken(clientPayload *ClientPayload) (payload *Payload, ok bool)
+	SaveAuthToken(payload *TokenPayload, authToken string) (err error)
+	GetAuthToken(clientPayload *ClientPayload) (payload *TokenPayload, ok bool)
 	Close()
 }
 
 type GoToken struct {
-	TokenKeyName string
-	TokenVersion string
-	Secret       string
-	ExpireHour   int
-	storage      StorageHandler
-	ginMiddleware gin.HandlerFunc
+	TokenKeyName              string
+	TokenVersion              string
+	Secret                    string
+	ExpireHour                int
+	storage                   StorageHandler
+	ginMiddleware             gin.HandlerFunc
+	middlewarePayloadProvider PayloadProvider
 }
 
 func (gt *GoToken) Exit() {
 	gt.storage.Close()
 }
 
-func (gt *GoToken) GenerateAuth(payload *Payload, payloadSecret string) (string, error) {
+func (gt *GoToken) GenerateAuth(payload *TokenPayload, payloadSecret string) (string, error) {
 	if payload.ExpiresAt == 0 {
 		payload.ExpiresAt = time.Now().Add(time.Hour * time.Duration(gt.ExpireHour)).Unix()
 	}
@@ -54,12 +71,12 @@ func (gt *GoToken) GenerateAuth(payload *Payload, payloadSecret string) (string,
 	return token, nil
 }
 
-func (gt *GoToken) ParseBase64(encoded string) (*Payload, error) {
+func (gt *GoToken) ParseBase64(encoded string) (*TokenPayload, error) {
 	payload, _ := ParseFormBase64(encoded)
 	return gt.Parse(payload)
 }
 
-func (gt *GoToken) Parse(clientPayload *ClientPayload) (payload *Payload, err error) {
+func (gt *GoToken) Parse(clientPayload *ClientPayload) (payload *TokenPayload, err error) {
 	storedPayload, ok := gt.storage.GetAuthToken(clientPayload)
 	// log.Infoln("Parse", storedPayload.ClientType, ok, clientPayload.ClientType, storedPayload.ExpiresAt < time.Now().Unix())
 	if !ok || storedPayload == nil {

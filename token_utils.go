@@ -8,13 +8,13 @@ import (
 	"github.com/gorilla/schema"
 )
 
-// func (payload *Payload) ToBase64() string {
+// func (payload *TokenPayload) ToBase64() string {
 // 	query := payload.ToQuery()
 // 	encoded := base64.StdEncoding.EncodeToString([]byte(query))
 // 	return encoded
 // }
 
-// func (payload *Payload) ToQuery() string {
+// func (payload *TokenPayload) ToQuery() string {
 // 	encoder := schema.NewEncoder()
 // 	dst := url.Values{}
 //
@@ -50,14 +50,14 @@ func ParseFormQuery(query string) (payload *ClientPayload, err error) {
 	return payload, nil
 }
 
-func generateToken(payload *Payload, secret string, tokenVersion string, payloadSecret string) string {
+func generateToken(payload *TokenPayload, secret string, tokenVersion string, payloadSecret string) string {
 	c := fmt.Sprintf("auth_%d%s%s%s%d%s%s", payload.UID, payload.ClientType, payload.ClientVersion, tokenVersion, payload.ExpiresAt, secret, payloadSecret)
 	token := crypto.SHA256(c)
 	return token
 }
 
 //
-// func generateIMToken(payload Payload, secret string, payloadSecret string) string {
+// func generateIMToken(payload TokenPayload, secret string, payloadSecret string) string {
 // 	c := fmt.Sprintf("im_%d%s%s", payload.UID, secret, payloadSecret)
 // 	token := crypto.StrMD5(c)
 // 	return token
