@@ -18,7 +18,7 @@ func userTokenHashKey(uid int64) string {
 	return "ut:" + strconv.FormatInt(uid, 10)
 }
 
-func NewRedisGoToken(config GoTokenConfig) (*GoToken) {
+func NewRedisGoToken(config GoTokenConfig) (*GoToken, error) {
 	// c, err := redis.Dial("tcp", config.RedisHost, redis.DialPassword(config.RedisPwd), redis.DialDatabase(config.RedisDB))
 	// if err != nil {
 	// 	log.Errorln("initGoToken: error ", err, config)
@@ -37,7 +37,7 @@ func NewRedisGoToken(config GoTokenConfig) (*GoToken) {
 		storage:      newRedisStorage(config),
 	}
 
-	return goToken
+	return goToken, nil
 }
 
 //
@@ -59,9 +59,9 @@ func newRedisStorage(config GoTokenConfig) StorageHandler {
 }
 
 func initRedisPool(config GoTokenConfig) *redis.Pool {
-	maxIdle := 2
-	timeout := time.Duration(240) * time.Second
-	maxActive := 3
+	maxIdle := 3
+	timeout := time.Duration(10) * time.Second
+	maxActive := 500
 
 	return &redis.Pool{
 		MaxIdle:     maxIdle, // 空闲数
@@ -97,7 +97,9 @@ func (gt *redisHandler) GetAuthToken(clientPayload *ClientPayload) (payload *Tok
 	}
 
 	key := goTokenKey(clientPayload.Token)
-	reply, err := redis.String(gt.redisPool.Get().Do("GET", key))
+	redisConn := gt.redisPool.Get()
+	defer redisConn.Close()
+	reply, err := redis.String(redisConn.Do("GET", key))
 
 	// log.Println("GetAuthToken", reply, err)
 	if err != nil {
@@ -134,6 +136,7 @@ func (gt *redisHandler) SaveAuthToken(payload *TokenPayload, token string) (err 
 	lastToken, _ := gt.getClientToken(payload.UID, string(payload.ClientType))
 
 	redisConn := gt.redisPool.Get()
+	// defer redisConn.Close()
 
 	if err = redisConn.Send("SET", goTokenKey(token), string(bytes)); err != nil {
 		return
@@ -163,6 +166,7 @@ func (gt *redisHandler) SaveAuthToken(payload *TokenPayload, token string) (err 
 
 func (gt *redisHandler) getClientToken(uid int64, clientType string) (string, bool) {
 	redisConn := gt.redisPool.Get()
+	defer redisConn.Close()
 	reply, err := redis.String(redisConn.Do("HGET", userTokenHashKey(uid), clientType))
 	// fmt.Println(reply, err)
 
@@ -179,6 +183,7 @@ func (gt *redisHandler) removeClientToken(uid int64, clientType string) bool {
 		return false
 	}
 	redisConn := gt.redisPool.Get()
+	defer redisConn.Close()
 	_, err := redisConn.Do("DEL", goTokenKey(token))
 	if err != nil {
 		return false

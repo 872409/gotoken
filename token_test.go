@@ -15,7 +15,7 @@ func TestGoToken_Exit(t *testing.T) {
 		ExpireHour:   1,
 	}
 
-	goToken := NewRedisGoToken(config)
+	goToken, _ := NewRedisGoToken(config)
 
 	tokenPayload := &TokenPayload{
 		UID:           1000,
@@ -26,4 +26,11 @@ func TestGoToken_Exit(t *testing.T) {
 
 	token, err := goToken.GenerateAuth(tokenPayload, "asdfasdfasd")
 	t.Log("token", err, token)
+	clientPayload := &ClientPayload{
+		Token:         token,
+		ClientType:    "ios",
+		ClientVersion: "1",
+	}
+	payload, err2 := goToken.Parse(clientPayload)
+	t.Log("payload", err2, payload)
 }

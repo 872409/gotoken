@@ -20,7 +20,7 @@ func getRedisConn() *GoToken {
 		ExpireHour:   1,
 	}
 
-	goToken := NewRedisGoToken(config)
+	goToken ,_:= NewRedisGoToken(config)
 	// goToken.TokenVersion = "v1"
 
 	return goToken
