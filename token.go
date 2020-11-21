@@ -78,11 +78,12 @@ func (gt *GoToken) ParseBase64(encoded string) (*TokenPayload, error) {
 
 func (gt *GoToken) Parse(clientPayload *ClientPayload) (payload *TokenPayload, err error) {
 	storedPayload, ok := gt.storage.GetAuthToken(clientPayload)
-	// log.Infoln("Parse", storedPayload.ClientType, ok, clientPayload.ClientType, storedPayload.ExpiresAt < time.Now().Unix())
+
 	if !ok || storedPayload == nil {
 		err = ErrorGoTokenInvalid
 		return
 	}
+	log.Infoln("Parse", storedPayload.ClientType, ok, clientPayload.ClientType, storedPayload.ExpiresAt < time.Now().Unix())
 	if storedPayload.ExpiresAt < time.Now().Unix() {
 		err = ErrorGoTokenExpired
 		return

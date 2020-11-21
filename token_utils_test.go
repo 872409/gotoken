@@ -5,19 +5,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gomodule/redigo/redis"
 	// "soyo/keeptalk/interface/openplatform/account/app/conf"
 )
-
+//
 func getRedisConn() *GoToken {
 
-	c, err := redis.Dial("tcp", "10.211.55.4:6379", redis.DialPassword("xx"), redis.DialDatabase(1))
-	if err != nil {
-		fmt.Println("Connect to storage error", err)
-		return nil
+
+	config := GoTokenConfig{
+		RedisHost:    "10.211.55.4:6379",
+		RedisPwd:     "xx",
+		RedisDB:      1,
+		TokenVersion: "111",
+		Secret:       "vvv",
+		ExpireHour:   1,
 	}
-	goToken := NewRedis("aaa", c)
-	goToken.TokenVersion = "v1"
+
+	goToken := NewRedisGoToken(config)
+	// goToken.TokenVersion = "v1"
 
 	return goToken
 }
@@ -46,7 +50,7 @@ func TestGenerate(t *testing.T) {
 	// base64 := payload.ToBase64()
 	// fmt.Println(token, ok)
 
-	clientPayload := &TokenPayload{ClientType: "ios", Token: token}
+	clientPayload := &ClientPayload{ClientType: "ios", Token: token}
 	getPayload, ok := goToken.Parse(clientPayload)
 	fmt.Println(getPayload, ok)
 }
