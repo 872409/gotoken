@@ -1,9 +1,8 @@
 package gotoken
 
 import (
-	"sync"
-
 	"github.com/872409/gatom/gc"
+	"github.com/872409/gatom/gdb"
 	"github.com/872409/gatom/log"
 	"github.com/gin-gonic/gin"
 )
@@ -100,7 +99,6 @@ func wrapClientPayload(c *gin.Context, payload *ClientPayload) *ClientPayload {
 // 	return decodePayload(encoded)
 // }
 
-var ginMiddleWareOnce = sync.Once{}
 
 func (gt *GoToken) GetClientPayload(g *gc.GContext) (*ClientPayload, error) {
 	return GetClientPayload(g.Context)
@@ -112,7 +110,7 @@ func (gt *GoToken) SetMiddlewarePayloadProvider(provider PayloadProvider) {
 
 func (gt *GoToken) GinMiddleware() gin.HandlerFunc {
 
-	ginMiddleWareOnce.Do(func() {
+	gt.ginMiddleWareOnce.Do(func() {
 		gt.ginMiddleware = func(c *gin.Context) {
 			g := gc.New(c)
 
@@ -154,4 +152,23 @@ func (gt *GoToken) GinMiddleware() gin.HandlerFunc {
 	})
 
 	return gt.ginMiddleware
+}
+
+
+
+func GetAppClient(gc *gc.GContext) gdb.AppClient {
+	clientPayload, err := GetClientPayload(gc.Context)
+	if err != nil {
+		return gdb.AppClient{
+			IP:      gc.ClientIP(),
+			Type:    "unknown",
+			Version: "0",
+		}
+	}
+
+	return gdb.AppClient{
+		IP:      gc.ClientIP(),
+		Type:    string(clientPayload.ClientType),
+		Version: clientPayload.ClientVersion,
+	}
 }

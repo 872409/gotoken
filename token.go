@@ -1,6 +1,7 @@
 package gotoken
 
 import (
+	"sync"
 	"time"
 
 	"github.com/872409/gatom/gc"
@@ -50,6 +51,7 @@ type GoToken struct {
 	storage                   StorageHandler
 	ginMiddleware             gin.HandlerFunc
 	middlewarePayloadProvider PayloadProvider
+	ginMiddleWareOnce  sync.Once
 }
 
 func (gt *GoToken) Exit() {
